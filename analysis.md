@@ -1,35 +1,30 @@
----
-title: todiramphus chloris draft genome
----
+# Todiramphus chloris draft genome assembly and analysis
 
-# Repeat mask the genome
+## Repeat masking
 
 ```sh
-# IDENTIFY REPEATS DE NOVO (takes ~16 hours)
-
-# Duplications. To determine whether particular genes have been duplicated in mutualistic lineages, we mapped reads from each species to the P. gracilis genome using mrFAST version 2.6.0 (ref. 70) allowing 6% edit distance.
-
-# The genome was ﬁrst repeat-masked using RepeatMasker version 4.0.1 (http://www.repeatmasker.org).
+mkdir repeats
+mkdir repeats/todChl_mask
+mkdir repeats/galGal_mask
+mkdir repeats/Full_mask
 
 # De Novo Repeat Identification
-cd genomes/todChl
-
-/home/chad/RepeatModeler/BuildDatabase -name todChl -engine ncbi todChl.fasta # 10X genome
+RepeatModeler/BuildDatabase -name todChl -engine ncbi genomes/todChl.fasta
 
 # ./RepeatModeler --help
-/home/chad/RepeatModeler/RepeatModeler -pa 15 -engine ncbi -database todChl 2>&1 | tee repeatmodeler.log
+RepeatModeler -pa 15 -engine ncbi -database todChl 2>&1 | tee repeatmodeler.log
 
 # Soft-mask using de novo library-
-RepeatMasker -pa 48 -xsmall -e ncbi -lib repeats/todChl-families.fa -dir repeats/todChl_mask genomes/todChl/todChl.fasta
+RepeatMasker -pa 48 -xsmall -e ncbi -lib repeats/todChl-families.fa -dir repeats/todChl_mask genomes/todChl.fasta
 
 # Then the maksed FASTA from this search can be used as input for the next search, using the chicken library from Repbase. I also normally rename the outputs after each round so they are more representative of what they contain.
 RepeatMasker -pa 48 -xsmall -e ncbi -species chicken -dir repeats/galGal_mask repeats/todChl_mask/todChl.fasta.masked
 
 # Finally, results from each round must be analyzed together to produce the final repeat annotation
 mkdir repeats/Full_mask
-cp repeats/galGal_mask/todChl.fasta.masked.masked repeats/Full_mask/todChl.scaffolds.full_mask.fa
+cp repeats/galGal_mask/todChl.fasta.masked.masked genomes/todChl.scaffolds.full_mask.fa
 
-# Output full-masked genoma
+# Output full-masked for annotation in genoma
 gzip -k repeats/Full_mask/todChl.scaffolds.full_mask.fa
 
 # Create BED files
@@ -46,44 +41,27 @@ wc -l repeats/todChl_mask/todChl.fasta.out.bed  # 680766 - 79% de novo
 wc -l repeats/Full_mask/intersect.bed  # 536414 common to both
 ```
 
-# Genome annotation
-
-## Structural annotation
+## Structural annotation with GeMoMa
 
 ```sh
-# Get genomes/annotations-
+# Anna's hummingbird genome
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/003/957/555/GCA_003957555.1_bCalAnn1_v1.p/GCA_003957555.1_bCalAnn1_v1.p_genomic.fna.gz -o genomes/
 
-mkdir annotations; cd annotations
+# Budgerigar genome and annotation
+wget ftp://ftp.ensembl.org/pub/rapid-release/gff3/melopsittacus_undulatus//Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3.gz -o genomes/
+wget ftp://ftp.ensembl.org/pub/rapid-release/fasta/melopsittacus_undulatus/dna//Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa.gz -o annotations/
 
-# calAnn
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/003/957/555/GCA_003957555.1_bCalAnn1_v1.p/GCA_003957555.1_bCalAnn1_v1.p_genomic.fna.gz
+# Golden eagle genome
+wget ftp://ftp.ensembl.org/pub/release-100/fasta/aquila_chrysaetos_chrysaetos/dna/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa.gz -o genomes/
 
-# Budgie
-wget ftp://ftp.ensembl.org/pub/rapid-release/gff3/melopsittacus_undulatus//Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3.gz
-wget ftp://ftp.ensembl.org/pub/rapid-release/fasta/melopsittacus_undulatus/dna//Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa.gz
+# Chicken genome and annotation
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.fna.gz -o genomes/
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.gff.gz -o annotations/
 
-# aquChr
-wget ftp://ftp.ensembl.org/pub/release-100/fasta/aquila_chrysaetos_chrysaetos/dna/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa.gz
-
-#chicken
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.fna.gz
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.gff.gz
-
-# round 1 = unmasked genome
-# t=/home/FM/celiason/uce-alcedinidae/genomes/todChl/todChl.fasta \
-
-# round 2 = repeat-masked genome
-mkdir ~/annotations/gemoma/round2
-cd ~/annotations/gemoma/round2
-
-java -jar -Xms20G -XX:ParallelGCThreads=48 GeMoMa-1.7.1.jar CLI GeMoMaPipeline
-
-infa=~/repeats/Full_mask/todChl.scaffolds.full_mask.fa
-head $infa
+infa=genomes/todChl.scaffolds.full_mask.fa
 
 # Hard-mask to work with gemoma-
-sed -e '/^>/! s/[[:lower:]]/N/g' $infa > masked.fasta
-head masked.fasta -n100
+sed -e '/^>/! s/[[:lower:]]/N/g' $infa > genomes/todChl_hardmasked.fasta
 
 java -jar -Xms20G -XX:ParallelGCThreads=48 GeMoMa-1.7.1.jar CLI GeMoMaPipeline
 
@@ -96,132 +74,111 @@ java -jar -Xms80G -XX:ParallelGCThreads=48 ../GeMoMa-1.7.1.jar CLI GeMoMaPipelin
 	o=true \
 	p=false \
 	tblastn=false \
-	t=/home/FM/celiason/uce-alcedinidae/annotations/gemoma/masked.fasta \
+	t=genomes/todChl_hardmasked.fasta \
 	s=own \
 	i=melUnd \
-	g=~/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa \
-	a=~/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
+	g=genomes/Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa \
+	a=annotations/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
 	s=own \
 	i=galGal \
-	g=~/annotations/data/GCF_000002315.6_GRCg6a_genomic.fna \
-	a=~/annotations/data/GCF_000002315.6_GRCg6a_genomic.gff \
+	g=genomes/GCF_000002315.6_GRCg6a_genomic.fna \
+	a=annotations/GCF_000002315.6_GRCg6a_genomic.gff \
 	s=own \
 	i=aquChr \
-	g=~/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa \
-	a=~/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
+	g=genomes/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa \
+	a=annotations/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
 	s=own \
 	i=calAnn \
-	g=~/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.fna \
-	a=~/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
+	g=genomes/GCF_003957555.1_bCalAnn1_v1.p_genomic.fna \
+	a=annotations/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
 
 # --mask-lower-case
 
+# 16539 genes, 17744.6 bp avg. in resulting annotation-
 gff=final_annotation.gff
-
 cat $gff | awk '{ if ($3 == "gene") print $0 }' | awk '{ sum += ($5 - $4) } END { print NR, sum / NR }'
 
-# 17001 genes, 17522.4 bp avg. (round1)
-# 16539 genes, 17744.6 bp avg. (round2)
-
-# java -jar GeMoMa-1.7.1.jar CLI Extractor c=true a=final_annotation.gff g=$ref
-
-# Run gemoma annotation filter (GAF)
-# Keep only best (top 1, m=1) matches-
+# Run gemoma annotation filter (GAF) to keep only best (top 1, m=1) matches
 java -jar ../GeMoMa-1.7.1.jar CLI GAF m=1 g=final_annotation.gff
-
-gt gff3 -sort round1/filtered_predictions.gff > round1/filtered_predictions_sorted.gff
-gt gff3 -sort round2/filtered_predictions.gff > round2/filtered_predictions_sorted.gff
-
-gt eval round2/filtered_predictions_sorted.gff round1/filtered_predictions_sorted.gff
-
-gffcompare -r round1/filtered_predictions.gff round2/filtered_predictions.gff
-wc -l round1/filtered_predictions.gff
-```
-
-## Functional annotation - interproscan
-
-```{r}
-# Add functional annotations to transcripts + GFF files
-
-ref=todChl.fasta
-
-cd ~/annotations/gemoma/round2
-
-alias ips=/home/FM/celiason/uce-alcedinidae/interproscan-5.47-82.0/interproscan.sh
-
-ips -i proteins_all.faa -goterms -f tsv
+gt gff3 -sort filtered_predictions.gff > filtered_predictions_sorted.gff
 
 # Output protein sequences
-gffread filtered_predictions.gff -g $ref -y proteins.fa
-
-# This once again is an example command line for running BLASTP against UniProt/Swiss-Prot:
-
-# wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
-# gunzip uniprot_sprot.fasta
-# makeblastdb -dbtype prot -in uniprot_sprot.fasta
-# blastp -query proteins.fa -db uniprot_sprot.fasta -evalue 1e-6 -max_hsps 1 -max_target_seqs 1 -outfmt 6 -out output.blastp
-
-# Using uniprot
-# Filtered transcripts (N = 16540)
-mmseqs easy-rbh --threads 48 proteins.fa ../uniprot_sprot.fasta uniprot.mmseqs tmp
-# All transcripts (N = 21562)
-mmseqs easy-rbh --threads 48 proteins_all.fa ../uniprot_sprot.fasta uniprot.all.mmseqs tmp
-
-mmseqs easy-rbh --threads 48 todChl_augustus_proteins.faa ../uniprot_sprot.fasta todChl_augustus_proteins.faa.uniprot.mmseqs tmp
-
-# Using chicken
-mmseqs easy-rbh --threads 48 proteins.fa ../UP000000539_9031.fasta chicken.mmseqs tmp
+gffread final_annotation.gff -g $ref -y proteins_all.faa
+gffread filtered_predictions.gff -g $ref -y proteins.faa
 
 # We will use the prefix 'GEMOMA' for our gene names, and an eight digit identifier.
-source activate MAKER
 maker_map_ids --prefix GEMOMA_ --justify 8 filtered_predictions.gff > filtered_predictions.map
-
 # The output is a two column file translating old gene and mRNA names to new more standardized names.
-# less $basename.map
-#  maker-NT_010783.15-snap-gene-0.0	GMOD_00000001
-
-# uniprot="/home/celiason/data/uniprot_sprot.fasta"
+# head $basename.map
+# maker-NT_010783.15-snap-gene-0.0	GMOD_00000001
 
 # These script do in-place replacement of names, so lets copy the files before running the scripts.
 cp filtered_predictions.gff filtered_predictions.renamed.gff
-cp uniprot.mmseqs uniprot.renamed.mmseqs
+# cp todChl_uniprot.mmseqs todChl_uniprot.renamed.mmseqs
 map_gff_ids filtered_predictions.map filtered_predictions.renamed.gff
-map_data_ids filtered_predictions.map uniprot.renamed.mmseqs
-
-# Use these commands to update your annotations with information from the BLAST report:
-maker_functional_gff $uniprot output.renamed.blastp $basename.noseq.renamed.gff > $basename.noseq.renamed.putative_function.gff
-maker_functional_fasta $uniprot output.renamed.blastp $basename.proteins.renamed.fasta > $basename.proteins.renamed.putative_function.fasta
-maker_functional_fasta $uniprot output.renamed.blastp $basename.transcripts.renamed.fasta > $basename.transcripts.renamed.putative_function.fasta
-
-# Look at the files to see that putative functions were added.
-less $basename.transcripts.renamed.putative_function.fasta
+# map_data_ids filtered_predictions.map uniprot.renamed.mmseqs
 ```
 
-# Genome consistency plots
+## Functional annotation
+
+```r
+mkdir interproscan
+cd interproscan
+
+# Using interproscan
+# Download and (protip) unzip tar .gz file with (SO much faster than gunzip + tar):
+# tar -xf FILENAME.tar.gz
+# wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.47-82.0/interproscan-5.47-82.0-64-bit.tar.gz
+# wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.47-82.0/interproscan-5.47-82.0-64-bit.tar.gz.md5
+
+# Recommended checksum to confirm the download was successful:
+# md5sum -c interproscan-5.47-82.0-64-bit.tar.gz.md5
+# Must return *interproscan-5.47-82.0-64-bit.tar.gz: OK*
+# If not - try downloading the file again as it may be a corrupted copy.
+
+# tar -pxvzf interproscan-5.47-82.0-*-bit.tar.gz
+
+alias ips=/home/FM/celiason/uce-alcedinidae/interproscan-5.47-82.0/interproscan.sh
+
+# Run
+ref=genomes/todChl.fasta
+ips -i annotations/proteins_all.faa -goterms -f tsv
+
+# Using uniprot
+
+# Filtered transcripts (N = 16540)
+mmseqs easy-rbh --threads 48 proteins.fa ../uniprot_sprot.fasta uniprot.mmseqs tmp
+
+# All transcripts (N = 21562)
+mmseqs easy-rbh --threads 48 proteins_all.fa ../uniprot_sprot.fasta uniprot.all.mmseqs tmp
+
+# Using chicken
+mmseqs easy-rbh --threads 48 proteins.fa ../UP000000539_9031.fasta chicken.mmseqs tmp
+```
+
+## Genome consistency plots
 
 ```sh
-cd ~/uce-alcedinidae
-
 # Chicken
-ref=data/galGal3/galGal3_all.fa
-./JupiterPlot/jupiter2 name=todChl-to-galGal3 ref=$ref fa=genomes/todChl/todChl.fasta
+ref=genomes/galGal3_all.fa
+./JupiterPlot/jupiter2 name=todChl-to-galGal3 ref=$ref fa=genomes/todChl.fasta
 
 # Hornbill
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/009/769/605/GCA_009769605.1_bBucAby1.pri/GCA_009769605.1_bBucAby1.pri_genomic.fna.gz
-gunzip GCA_009769605.1_bBucAby1.pri_genomic.fna.gz
-ref=GCA_009769605.1_bBucAby1.pri_genomic.fna
-./JupiterPlot/jupiter2 name=todChl-to-bucAby ref=$ref fa=genomes/todChl/todChl.fasta
+# wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/009/769/605/GCA_009769605.1_bBucAby1.pri/GCA_009769605.1_bBucAby1.pri_genomic.fna.gz
+# gunzip GCA_009769605.1_bBucAby1.pri_genomic.fna.gz
+ref=genomes/GCA_009769605.1_bBucAby1.pri_genomic.fna
+./JupiterPlot/jupiter2 name=todChl-to-bucAby ref=$ref fa=genomes/todChl.fasta
 
 # Bee eater
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/009/819/595/GCA_009819595.1_bMerNub1.pri/GCA_009819595.1_bMerNub1.pri_genomic.fna.gz
-gunzip GCA_009819595.1_bMerNub1.pri_genomic.fna.gz
+# wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/009/819/595/GCA_009819595.1_bMerNub1.pri/GCA_009819595.1_bMerNub1.pri_genomic.fna.gz
+# gunzip GCA_009819595.1_bMerNub1.pri_genomic.fna.gz
 ref=GCA_009819595.1_bMerNub1.pri_genomic.fna
-./JupiterPlot/jupiter2 name=todChl-to-merNub ref=$ref fa=genomes/todChl/todChl.fasta
+./JupiterPlot/jupiter2 name=todChl-to-merNub ref=$ref fa=genomes/todChl.fasta
 ```
 
-# PSMC analysis
+## PSMC analysis
 
-## Align raw reads to reference
+### Align raw reads to reference
 
 ```sh
 # Combine raw reads (from SRA) into single files-
@@ -231,40 +188,40 @@ cat King*R2*fastq.gz > todChl_reads2.fastq.gz
 # Setup analysis
 reads1="todChl_reads1.fastq.gz"
 reads2="todChl_reads2.fastq.gz"
-ref="ref/kingfisher.fasta"
+ref="ref/todChl.fasta"
 
 # Run
 alias bwa=./bwa/bwa
 alias fastp=./fastp
-fastp -i $reads1 -I $reads2 --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT --stdout -h kingfisher10x.html |\
+fastp -i $reads1 -I $reads2 --adapter_sequence=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA --adapter_sequence_r2=AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT --stdout -h todChl-to-todChl.html |\
 # align
-bwa mem -p -t 48 reference_genome/kingfisher - |\
+bwa mem -p -t 48 genomes/kingfisher - |\
 # make BAM
 samtools view -Sb - |\
 # sort BAM and save (using 100 GB of RAM with -m argument)
-samtools sort -m 100G > bam/kingfisher10x.bam
+samtools sort -m 100G > todChl-to-todChl.bam
 
 # Index BAM file
-samtools index bam/kingfisher10x.bam
+samtools index todChl-to-todChl.bam
 
 # Get statistics
 samtools flagstat 
 
 # View alignment
-samtools tview bam/kingfisher10x.bam reference_genome/kingfisher.fasta
+samtools tview todChl-to-todChl.bam genomes/todChl.fasta
 ```
 
-## Call SNVs in R
+### Call SNVs in R
 
 ```r
 library(parallel)
 
-ref="genomes/todChl/todChl.fasta"
-bam="bam/kingfisher10x.bam"
+ref="genomes/todChl.fasta"
+bam="todChl-to-todChl.bam"
 # regions <- system(paste0("grep -Po '(?<=>)[0-9_]+' ", ref), intern=TRUE)
 
 # run in shell-
-# cat reference_genome/kingfisher.fasta | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > kingfisher.fasta.seqlengths
+# cat reference_genomes/kingfisher.fasta | awk '$0 ~ ">" {if (NR > 1) {print c;} c=0;printf substr($0,2,100) "\t"; } $0 !~ ">" {c+=length($0);} END { print c; }' > kingfisher.fasta.seqlengths
 
 # Create regions for parallelizing
 nms <- read.delim("kingfisher.fasta.seqlengths", sep="\t", head=F)
@@ -282,12 +239,8 @@ res <- lapply(1:nrow(nms), function(x) {
 options(scipen=999)
 res2 <- do.call(rbind, res)
 regions <- setNames(paste0(res2$seq, ":", res2$start, "-", res2$end), res2$id)
-# regions[1:5]
-length(regions)
-regions
 
 mclapply(1:length(regions), mc.cores=48, function(x) {
-	# x=15223
 	reg <- unname(regions[x])
 	filename <- names(regions[x])
 	run <- paste0("samtools mpileup -Q 30 -q 30 -r ", reg, " -uf ", ref, " ", bam, " | bcftools call -c | vcfutils.pl vcf2fq -d 10 -D 100 | gzip > temp/", filename, ".fq.gz")
@@ -295,11 +248,9 @@ mclapply(1:length(regions), mc.cores=48, function(x) {
 })
 ```
 
-## Cleanup and merge fq files
+### Cleanup and merge fq files
 
 ```sh
-# list.files("temp", pattern=".gz")
-
 # Delete files <100 bytes
 find *.gz -type f -size -100b -delete
 
@@ -307,14 +258,14 @@ find *.gz -type f -size -100b -delete
 cat temp/*.gz > todChl_diploid.fq.gz
 ```
 
-## Prepare for PSMC
+### Prepare for PSMC
 
 ```r
 # Split kingfisher10X genome into smaller fragments/contigs:
-system("./psmc/utils/splitfa genomes/todChl/todChl.fasta > genomes/todChl/todChl_split.fa")
+system("./psmc/utils/splitfa genomes/todChl.fasta > genomes/todChl_split.fa")
 ```
 
-## Run PSMC
+### Run PSMC
 
 ```sh
 # Make psmcfa file - quick
@@ -324,16 +275,15 @@ system("./psmc/utils/splitfa genomes/todChl/todChl.fasta > genomes/todChl/todChl
 # Run PSMC analyses
 # Using settings in nadachowska-bryska et al 2015: "Based on the results from the pilot runs, we chose the final settings for the PSMC to be ‘‘N30 –t5 –r5 –p 4+30*2+4+6+10’’ for all species.""
 ./psmc/psmc -N30 -t5 -r5 -p"4+30*2+4+6+10" -o todChl_diploid.psmc todChl_diploid.psmcfa
+```
 
+### PSMC bootstraps
+
+```r
 # To perform bootstrapping, one has to run splitfa first to split long chromosome
 # sequences to shorter segments. When the `-b' option is applied, psmc will then
 # randomly sample with replacement from these segments. As an example, the
 # following command lines perform 100 rounds of bootstrapping:
-```
-
-## PSMC bootstraps
-
-```r
 library(parallel)
 system("./psmc/utils/splitfa todChl_diploid.psmcfa > todChl_split.psmcfa")
 # Run
@@ -341,6 +291,7 @@ mclapply(1:100, mc.cores=48, function(x) {
 	run <- paste0("./psmc/psmc -N30 -t5 -r5 -b -p'4+30*2+4+6+10' -o temp/todChl_round-", x, ".psmc todChl_split.psmcfa")
 	system(run)
 })
+
 # Combine
 system("cat todChl_diploid.psmc temp/todChl_round-*.psmc > todChl_combined.psmc")
 
@@ -348,25 +299,20 @@ system("cat todChl_diploid.psmc temp/todChl_round-*.psmc > todChl_combined.psmc"
 system("rm temp/todChl_round-*.psmc")
 ```
 
-# Orthofinder
+## Orthofinder analysis
 
 ```sh
-cd annotations/gemoma/round2/
+ref=genomes/todChl.scaffolds.full_mask.fa
 
-ref="repeats/Full_mask/todChl.scaffolds.full_mask.fa"
 gffread -J -V -y proteins.faa -g $ref filtered_predictions.gff
-# gffread -J -V -y todChl_augustus_proteins.faa -g $ref todChl_augustus_final.gff3
 
 grep -c ">" proteins.faa
-# head proteins_all.faa
-# cp proteins_all.faa /home/FM/celiason/uce-alcedinidae/ortho/proteomes/todChl_gemoma_proteins.faa
-cp proteins.faa ~/uce-alcedinidae/ortho/proteomes/todChl_gemoma_proteins.faa
 
-# cd ~/uce-alcedinidae
-# mkdir ortho; mkdir ortho/proteomes
-cd ~/uce-alcedinidae/ortho
+
+# Download proteomes (see manuscript, supp. tables for details/NCBI links)
+# mkdir proteomes; cd proteomes
+
 ls proteomes # calAnn, melUnd, strHab, falRus, taeGut, corMon + todChl
-# orthofinder -t 24 -a 24 -M msa -S mmseqs -T iqtree -f proteomes/
 
 # Extract primary transcripts only (cuts down on size and runtime)
 # wget https://raw.githubusercontent.com/davidemms/OrthoFinder/master/tools/primary_transcript.py primary_transcript2.py 
@@ -375,13 +321,25 @@ for f in proteomes/*faa
 		python primary_transcript2.py $f
 	done
 
-python primary_transcript2.py proteomes/todChl_augustus_proteins.faa
+python primary_transcript2.py annotations/proteins.faa
 
 # Run with coraciiform-heavy species set
 orthofinder -t 24 -a 24 -M msa -og -S mmseqs -T iqtree -f proteomes/primary_transcripts/
 ```
 
-# CAFE analysis
+## CAFE
+
+### Run
+
+```sh
+# Estimate error to account for incomplete assemblies (e.g., for B10k genomes)
+python cafe/caferror.py -i kingfishers/cafe_error1.sh -d kingfishers/error -f 1 -v 0 -s 1
+
+# Now run accounting for error
+cafe cafe_king1.sh
+```
+
+### Analysis
 
 ```r
 library(ape)
@@ -391,38 +349,158 @@ library(readxl)
 library(stringr)
 library(UpSetR)
 
-# Estimate error to account for incomplete assemblies (e.g., for B10k genomes)
-setwd("~/Downloads/CAFE")
-system("python cafe/caferror.py -i kingfishers/cafe_error1.sh -d kingfishers/error -f 1 -v 0 -s 1")
-
-# Now run accounting for error
-system("cafe cafe_king1.sh")
-
-# Analysis
-
 # CAFE3- "An error value of ε = 0.1 means that in 90% of gene families, the observed size is equal to the true size, whereas in 10% of gene families, the observed size is either too large or too small (fig. 1A, C, and E)."
 
-# Load phylogeny (McCullough et al. 2019 + Prum et al. 2015 branching times for taeGut, calAnn)
-tr <- read.tree(file="~/Dropbox/Projects/King_genome/analysis-cafe/cafe-tree.phy")
+# Plot tree
+tr <- read.tree("coraci192-beast-fixed.tre")  # downloaded from dryad (Eliason et al. 2021 Am Nat)
+tr <- drop.tip(tr, which(!(tr$tip %in% c('Todiramphus_chloris','Todus_mexicanus','Halcyon_senegalensis','Chloroceryle_aenea','Ceyx_cyanopectus'))))
+source("sppabbrev.R")
+tr$tip.label <- sppAbbrev(tr$tip)
+tr$root.edge <- 25
+maxage <- max(branching.times(tr))
+tr <- bind.tip(tr, tip.label='taeGut', position=62-maxage, edge.length=62)
+maxage <- max(branching.times(tr))
+tr <- bind.tip(tr, tip.label='calAnn', position=67.4-maxage, edge.length=67.4)
+plot(tr)
+is.ultrametric(tr)
 
-# Load CAFE results
-edgedat <- read_excel("analysis-cafe/cafe_edge_stats.xlsx", sheet=1)
 
-xx <- edgedat$rate_spperr
+resfile <- "cafe/cafe_final_report.cafe"
+# resfile <- "/Users/chadeliason/Downloads/CAFE/kingfishers/cafe_final_report.cafe"
 
-pdf("figs/gene_expansion_err.pdf", width=3, height=6)
-plot(tr, edge.col=ifelse(xx>0, "red", "blue"), no.margin=T, cex=0.75)
-edgelabels(text=round(xx,3), frame="none", adj=c(0.5, -.5), cex=.7)
-edgelabels(text=paste0("+", edgedat$expand_spperr, "/ -", edgedat$decrease_spperr), frame="none", adj=c(0.5, 1.5), cex=.7)
+raw <- readLines(resfile)
+
+# avg expansion
+# avgexp <- as.numeric(str_match_all(raw[6], "[0-9\\.\\-]+")[[1]][, 1])
+
+# caford <- rank(as.numeric(str_match_all(raw[4], "[0-9]+")[[1]][,1]))
+caford <- as.character(as.numeric(str_match_all(raw[4], "[0-9]+")[[1]][,1]))
+# names(avgexp) <- caford
+
+tr <- read.tree(text=paste0(gsub("Tree:", "", raw[1]), ";"))
+
+phyord <- c('0'=1,'2'=2,'4'=3,'6'=4,'8'= 5,'7'=13,'5'=12,'3'=11,'1'=10,'10'=6,'9'=9,'12'=7,'11'=8)
+
+# Significant changes only
+out <- read.delim(resfile, head=T, skip=9, sep="\t")
+out$padj <- p.adjust(out[, 3], method="fdr")
+# table(out$padj < 0.05)
+keep <- out[, 3] < 0.05  # significant ones
+table(keep)  # N = 1443 orthogroups
+
+# sig <- as.data.frame(do.call(rbind, strsplit(gsub("\\(|\\)", "", out[keep, 4]), split=",")))
+# plot(sig[, 1])
+# abline(h=0.05, lty=2)
+
+# Get family-wide P values of gene families expanded/contracted
+res <- t(sapply(1:nrow(out), function(x) str_match_all(out[x, 2], "_(\\d+)\\:")[[1]][, 2] ))
+res <- apply(res, 2, as.numeric)
+colnames(res) <- str_match_all(raw[3], "<(\\d+)>")[[1]][, 2]
+colnames(res) <- phyord[colnames(res)]  # 
+res <- res[, order(as.numeric(colnames(res)))]
+rownames(res) <- paste0("og", 1:nrow(res))
+
+# Ids for tips and nodes to use later
+tid <- as.character(1:Ntip(tr))
+nid <- as.character((Ntip(tr)+1) : (Ntip(tr) + Nnode(tr)))
+
+# Node-wise P values-
+nodesig <- as.data.frame(do.call(rbind, strsplit(gsub("\\(|\\)", "", out[keep, 4]), split=",")))
+colnames(nodesig) <- phyord[caford]
+
+# Only keep certain OGs
+res.signif <- res[keep, ]
+
+# Calculate changes along branches of a phylogeny
+changes <- t(sapply(1:nrow(res.signif), function(x) {
+	states <- res.signif[x, ]
+	changes <- states[tr$edge[, 2]] - states[tr$edge[, 1]]
+	pvals <- nodesig[x, match(names(changes), colnames(nodesig))]  # Viterbi P values from cafe
+	ifelse(pvals < 0.05, changes, 0)
+}))
+rownames(changes) <- rownames(res.signif)
+colnames(changes) <- tr$edge[, 2]
+
+sum_nochange <- apply(changes, 2, function(x) sum(x == 0))  # no change
+sum_expand <- apply(changes, 2, function(x) sum(x > 0))  # expand
+sum_contract <- apply(changes, 2, function(x) sum(x < 0))  # contract
+
+tot_expand <- apply(changes, 2, function(x) sum(x[x > 0]))  # expand
+tot_contract <- apply(changes, 2, function(x) sum(x[x < 0]))  # contract
+
+change_per_gene <- apply(changes, 2, sum) / nrow(res.signif)
+
+pdf("figs/gene_expansion_err_signif_viter.pdf", width=3, height=6)
+plot(tr, edge.col = ifelse(change_per_gene > 0, "red", "blue"), no.margin = TRUE, cex = 0.75)
+edgelabels(text = round(change_per_gene, 3), frame = "none", adj = c(0.5, -0.5), cex = 0.7)
+edgelabels(text = paste0("+", sum_expand, "/ -", sum_contract), frame = "none", adj = c(0.5, 1.5), cex = 0.7)
 dev.off()
 
-# Load gene families
-ogs <- read.delim("analysis-cafe/Orthogroups.tsv")
+# Load orthogroup output
+ogs <- read.delim("cafe/Orthogroups.tsv")
 
+# Significantly expanded in todChl
+picks <- names(which((changes[, "5"] > 0)))
+picks <- as.numeric(str_extract(picks, "\\d+"))
+ogs[picks,]
+transcripts_expanded <- unlist(strsplit(ogs[picks, 8], ", "))  # Convert to list of transcript names
+picks <- names(which((changes[, "5"] < 0)))
+picks <- as.numeric(str_extract(picks, "\\d+"))
+transcripts_contracted <- unlist(strsplit(ogs[picks, 8], ", "))
+
+# Load positive selection/gene name annotations
+nms <- read.csv("nms.csv", row=1)
+nms$file <- gsub(":", "_", nms$file)
+
+# Get gene name list
+genes <- nms$finalgene[match(transcripts_expanded, nms$file)]
+genes <- genes[!is.na(genes)]
+genes <- sort(unique(genes))
+clipr::write_clip(genes)  # put this into STRING network website for analysis
+
+# Load interproscan annotation
+iprdat <- read.delim("annotations/todChl_proteins_all_gemoma_faa.tsv", head=FALSE)
+iprdat$V1 <- gsub(":", "_", iprdat$V1)  # fix transcript names
+
+# todiramphus green color (RGB) in map- 72	170	129	
+
+# Get list of GO terms
+
+goterms1 <- iprdat$V14[match(transcripts_expanded, iprdat$V1)]
+goterms1 <- goterms1[!is.na(goterms1) & goterms1!=""]
+goterms1 <- strsplit(goterms1, "\\|")
+goterms1 <- sort(unique(unlist(goterms1)))
+clipr::write_clip(unlist(goterms1)) # for use in REVIGO (Fig. 3B panel)
+clipr::write_clip(unlist(goterms1), breaks=",") # for use in REVIGO (Fig. 3B panel)
+
+# Genes associated with each term-
+picks <- iprdat$V1 %in% transcripts_expanded & grepl("GO:0007186", iprdat$V14) # GPCR
+iprdat[picks, ]
+
+picks <- iprdat$V1 %in% transcripts_expanded & grepl("GO:0007186", iprdat$V14) & grepl("[Oo]psin", iprdat$V13)# GPCR
+iprdat[picks, ]
+sort(unique(iprdat$V1[picks]))  # 34 transcripts
+
+gene_lookup$finalgene[match(unique(iprdat$V1[picks]), gene_lookup$file)]
+
+goterms2 <- iprdat$V14[match(transcripts_contracted, iprdat$V1)]
+goterms2 <- goterms2[!is.na(goterms2) & goterms2!=""]
+goterms2 <- strsplit(goterms2, "\\|")
+goterms2 <- sort(unique(unlist(goterms2)))
+clipr::write_clip(unlist(goterms2)) # for use in REVIGO (Fig. 3B panel)
+
+# interproscan results 
+iprnums <- iprdat[match(transcripts, iprdat$V1), "V12"]
+iprnums <- iprnums[!is.na(iprnums) & iprnums!=""]
+```
+
+### Load gene families
+
+```r
 x <- strsplit(ogs[,8], ",")
 
 # Find families that have expanded in todChl
-res <- read.delim("analysis-cafe/report.txt.cafe", skip=10)
+res <- read.delim("cafe/report.txt.cafe", skip=10)
 trees <- res[,2]
 
 # Find todChl-halSen branch in tree
@@ -433,20 +511,16 @@ x1 <- as.numeric(m[,2])  # halSen
 x2 <- as.numeric(m[,3])  # todChl
 x3 <- as.numeric(m[,4])  # ancestor
 
-table(x2&!x1)
-
 # Get number of unique gene families expanded in ceyCya
 m2 <- str_match(trees, "ceyCya\\_(\\d+)\\:.*?(\\d+)\\:16\\.7776")
 
-ogstats <- read.delim("output/orthofinder_may06/Orthogroups.GeneCount.tsv")
+ogstats <- read.delim("Orthogroups.GeneCount.tsv")
 names(ogstats)[2:8] <- c('todMex','halSen','chlAen','ceyCya','calAnn','taeGut','todChl')
 
 idx <- which(x2>x3 & ogstats[,"ceyCya"]!=0)
 
 # Find todChl genes in orthogroups gained in todChl relative to MRCA with halSen
 transcripts <- unlist(strsplit(ogs[which(x2 > x3), 8], ", "))
-# transcripts2 <- unlist(strsplit(ogs[which(x2 > x3 & x1 < x3), 8], ", "))
-# transcripts3 <- unlist(strsplit(ogs[idx, 8], ", "))
 
 setdat <- ogstats[,2:8]
 setdat <- cbind(set='a',setdat)
@@ -459,12 +533,8 @@ upset(setdat, nsets=7, sets=c('todMex','ceyCya','chlAen','halSen','todChl','taeG
 dev.off()
 
 # Lookup genes from GFF files used in gemoma-
-nms <- read.csv("analysis-cafe/pos_selection_results_repeatmasked_20210504.csv", row=1)
-
 annot <- read.delim("~/Downloads/uniprot_todChl_annot_gemoma_round2.txt", head=F)
 annot$V1 <- gsub(":", "_", annot$V1)
-
-setdiff(res, annot$V1)  # e.g., aquChr_transcript_ENSACCT00020000837_R0
 
 # Get gene names
 genes <- nms$finalgene[match(transcripts, nms$file)]
@@ -472,25 +542,8 @@ genes <- genes[!is.na(genes)]
 genes <- sort(unique(genes))
 clipr::write_clip(genes)  # put this into STRING network website for analysis
 
-# GO terms
-tmp <- read.delim("analysis-cafe/proteins_gemoma_round1_interpro.tsv", head = FALSE)
-
-goterms <- tmp$V14[match(res, tmp$V1)]
-goterms <- goterms[!is.na(goterms) & goterms!=""]
-goterms <- strsplit(goterms, "\\|")
-goterms <- sort(unique(unlist(goterms)))
-clipr::write_clip(unlist(goterms)) # for use in REVIGO (Fig. 3B panel)
-
-# interproscan results 
-iprnums <- tmp[match(transcripts, tmp$V1), "V12"]
-iprnums <- iprnums[!is.na(iprnums) & iprnums!=""]
-
-res1 <- dcEnrichment(iprnums, domain="InterPro", ontology="GOBP")
-view(res1)
-
 # Functional annotation of genes
-setwd("~/uce-alcedinidae/ortho/proteomes/primary_transcripts/OrthoFinder/Results_May06/WorkingDirectory/OrthoFinder/Results_May06")
-dat <- read.delim("Orthogroups/Orthogroups.GeneCount.tsv")
+dat <- read.delim("Orthogroups.GeneCount.tsv")
 
 # Orthogroups specific to todChl-
 picks <- as.character(dat[apply(dat[,2:7], 1, sum)==0, "Orthogroup"])
@@ -629,4 +682,3 @@ jpg("figs/network_ogs.jpg", width=7, height=7)
 plot(g, font=16)
 dev.off()
 ```
-
