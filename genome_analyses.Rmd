@@ -2,7 +2,7 @@
 title: todiramphus chloris draft genome
 ---
 
-# Repeat masking
+# Repeat mask the genome
 
 ```sh
 # IDENTIFY REPEATS DE NOVO (takes ~16 hours)
@@ -32,12 +32,6 @@ cp repeats/galGal_mask/todChl.fasta.masked.masked repeats/Full_mask/todChl.scaff
 # Output full-masked genoma
 gzip -k repeats/Full_mask/todChl.scaffolds.full_mask.fa
 
-# Only need this if we're running MAKER-
-# gunzip repeats/todChl_mask/*.cat.gz repeats/galGal_mask/*.cat.gz
-# cat repeats/todChl_mask/*.cat.gz repeats/galGal_mask/*.cat.gz \
-#   > repeats/Final_mask/todChl.scaffolds.full_mask.cat
-# ProcessRepeats -xsmall repeats/Final_mask/todChl.scaffolds.Full_mask.cat
-
 # Create BED files
 ./RMout_to_bed.pl repeats/galGal_mask/todChl.fasta.masked.out base0
 ./RMout_to_bed.pl repeats/todChl_mask/todChl.fasta.out base0
@@ -59,8 +53,7 @@ wc -l repeats/Full_mask/intersect.bed  # 536414 common to both
 ```sh
 # Get genomes/annotations-
 
-mkdir annotations/data
-cd annotations/data
+mkdir annotations; cd annotations
 
 # calAnn
 wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/003/957/555/GCA_003957555.1_bCalAnn1_v1.p/GCA_003957555.1_bCalAnn1_v1.p_genomic.fna.gz
@@ -80,12 +73,12 @@ wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GR
 # t=/home/FM/celiason/uce-alcedinidae/genomes/todChl/todChl.fasta \
 
 # round 2 = repeat-masked genome
-mkdir ~/uce-alcedinidae/annotations/gemoma/round2
-cd ~/uce-alcedinidae/annotations/gemoma/round2
+mkdir ~/annotations/gemoma/round2
+cd ~/annotations/gemoma/round2
 
 java -jar -Xms20G -XX:ParallelGCThreads=48 GeMoMa-1.7.1.jar CLI GeMoMaPipeline
 
-infa=/home/FM/celiason/uce-alcedinidae/repeats/Full_mask/todChl.scaffolds.full_mask.fa
+infa=~/repeats/Full_mask/todChl.scaffolds.full_mask.fa
 head $infa
 
 # Hard-mask to work with gemoma-
@@ -106,20 +99,20 @@ java -jar -Xms80G -XX:ParallelGCThreads=48 ../GeMoMa-1.7.1.jar CLI GeMoMaPipelin
 	t=/home/FM/celiason/uce-alcedinidae/annotations/gemoma/masked.fasta \
 	s=own \
 	i=melUnd \
-	g=/home/FM/celiason/uce-alcedinidae/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa \
-	a=/home/FM/celiason/uce-alcedinidae/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
+	g=~/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa \
+	a=~/annotations/data/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
 	s=own \
 	i=galGal \
-	g=/home/FM/celiason/uce-alcedinidae/annotations/data/GCF_000002315.6_GRCg6a_genomic.fna \
-	a=/home/FM/celiason/uce-alcedinidae/annotations/data/GCF_000002315.6_GRCg6a_genomic.gff \
+	g=~/annotations/data/GCF_000002315.6_GRCg6a_genomic.fna \
+	a=~/annotations/data/GCF_000002315.6_GRCg6a_genomic.gff \
 	s=own \
 	i=aquChr \
-	g=/home/FM/celiason/uce-alcedinidae/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa \
-	a=/home/FM/celiason/uce-alcedinidae/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
+	g=~/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa \
+	a=~/annotations/data/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
 	s=own \
 	i=calAnn \
-	g=/home/FM/celiason/uce-alcedinidae/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.fna \
-	a=/home/FM/celiason/uce-alcedinidae/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
+	g=~/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.fna \
+	a=~/annotations/data/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
 
 # --mask-lower-case
 
@@ -145,56 +138,14 @@ gffcompare -r round1/filtered_predictions.gff round2/filtered_predictions.gff
 wc -l round1/filtered_predictions.gff
 ```
 
-## Functional annotation
+## Functional annotation - interproscan
 
-```r
-# Using interproscan
-
-# Download and (protip) unzip tar .gz file with (SO much faster than gunzip + tar):
-# tar -xf FILENAME.tar.gz
-mkdir interproscan
-cd interproscan
-# wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.47-82.0/interproscan-5.47-82.0-64-bit.tar.gz
-# wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.47-82.0/interproscan-5.47-82.0-64-bit.tar.gz.md5
-
-# Recommended checksum to confirm the download was successful:
-# md5sum -c interproscan-5.47-82.0-64-bit.tar.gz.md5
-# Must return *interproscan-5.47-82.0-64-bit.tar.gz: OK*
-# If not - try downloading the file again as it may be a corrupted copy.
-
-# tar -pxvzf interproscan-5.47-82.0-*-bit.tar.gz
-
-# Test run-
-./interproscan.sh -i test_proteins.fasta -f tsv
-./interproscan.sh -i test_proteins.fasta -f tsv -dp
-
-alias ips=/home/FM/celiason/uce-alcedinidae/interproscan-5.47-82.0/interproscan.sh
-# ipsJar=/home/FM/celiason/uce-alcedinidae/interproscan/interproscan-5.47-82.0/interproscan-5.jar
-# ips
-# Real run-
-# proteins.fasta file was produced by MAKER as standard output
-ips -i proteins.fa -goterms -f tsv
-# OK it's going. I think 1000 genes takes a day, so 17000 might take a while........
-# NO! Much quicker- I started 11/26 3:06 PM; ended 11/27 12:36 AM (so <24 h!)
-
-conda create --name MAKER
-conda activate MAKER
-conda install python=2.7
-conda install -c bioconda maker
-# conda create --name MAKER python=2.7.6
-conda deactivate
-
-# When you want to use maker, just activate the MAKER environment by
-# source activate MAKER
-
+```{r}
 # Add functional annotations to transcripts + GFF files
-# on VORTEX server
 
-# cd ~/kingfisher_annotation/todChl_rnd3.maker.output
+ref=todChl.fasta
 
-ref="/home/FM/celiason/uce-alcedinidae/genomes/todChl/todChl.fasta"
-
-cd /home/FM/celiason/uce-alcedinidae/annotations/gemoma/round2
+cd ~/annotations/gemoma/round2
 
 alias ips=/home/FM/celiason/uce-alcedinidae/interproscan-5.47-82.0/interproscan.sh
 
@@ -244,12 +195,6 @@ maker_functional_fasta $uniprot output.renamed.blastp $basename.transcripts.rena
 
 # Look at the files to see that putative functions were added.
 less $basename.transcripts.renamed.putative_function.fasta
-
-# Use these commands to update your annotations with information from the InterProScan report:
-ipr_update_gff $basename.noseq.renamed.putative_function.gff output.renamed.iprscan > $basename.noseq.renamed.putative_function.domain_added.gff
-cat $basename.noseq.renamed.putative_function.domain_added.gff | less
-
-conda deactivate
 ```
 
 # Genome consistency plots
@@ -279,8 +224,6 @@ ref=GCA_009819595.1_bMerNub1.pri_genomic.fna
 ## Align raw reads to reference
 
 ```sh
-# in vortex/storage/raw_reads-
-
 # Combine raw reads (from SRA) into single files-
 cat King*R1*fastq.gz > todChl_reads1.fastq.gz
 cat King*R2*fastq.gz > todChl_reads2.fastq.gz
@@ -289,8 +232,6 @@ cat King*R2*fastq.gz > todChl_reads2.fastq.gz
 reads1="todChl_reads1.fastq.gz"
 reads2="todChl_reads2.fastq.gz"
 ref="ref/kingfisher.fasta"
-
-echo $reads1
 
 # Run
 alias bwa=./bwa/bwa
