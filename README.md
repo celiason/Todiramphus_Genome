@@ -1,3 +1,1 @@
-# Todiramphus genome
-
-Code for analyses of the Todiramphus chloris genome presented in the paper (CITE)
+Code and output (e.g., gene annotations) used the Todiramphus chloris genome paper (Eliason et al. 2022 G3)
