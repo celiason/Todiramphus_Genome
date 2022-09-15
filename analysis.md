@@ -1,4 +1,4 @@
-# Todiramphus chloris draft genome assembly and analysis
+# Collared kingfisher draft genome assembly and analysis
 
 ## Repeat masking
 
