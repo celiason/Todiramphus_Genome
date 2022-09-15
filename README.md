@@ -1,1 +1,1 @@
-# Todiramphus_Genome
+Genome analyses for Todiramphus chloris genome paper (CITE)
