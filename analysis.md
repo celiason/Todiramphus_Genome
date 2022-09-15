@@ -448,8 +448,8 @@ picks <- names(which((changes[, "5"] < 0)))
 picks <- as.numeric(str_extract(picks, "\\d+"))
 transcripts_contracted <- unlist(strsplit(ogs[picks, 8], ", "))
 
-# Load positive selection/gene name annotations
-nms <- read.csv("nms.csv", row=1)
+# Load gene name annotations
+nms <- read.csv("annotation/gene_lookup.csv", row=1)
 nms$file <- gsub(":", "_", nms$file)
 
 # Get gene name list
@@ -481,7 +481,7 @@ picks <- iprdat$V1 %in% transcripts_expanded & grepl("GO:0007186", iprdat$V14) &
 iprdat[picks, ]
 sort(unique(iprdat$V1[picks]))  # 34 transcripts
 
-gene_lookup$finalgene[match(unique(iprdat$V1[picks]), gene_lookup$file)]
+nms$finalgene[match(unique(iprdat$V1[picks]), nms$file)]
 
 goterms2 <- iprdat$V14[match(transcripts_contracted, iprdat$V1)]
 goterms2 <- goterms2[!is.na(goterms2) & goterms2!=""]
