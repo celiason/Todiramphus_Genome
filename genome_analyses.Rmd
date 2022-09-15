@@ -5,9 +5,6 @@ title: todiramphus chloris draft genome
 # Repeat masking
 
 ```sh
-mkdir uce-alcedinidae
-cd uce-alcedinidae
-
 # IDENTIFY REPEATS DE NOVO (takes ~16 hours)
 
 # Duplications. To determine whether particular genes have been duplicated in mutualistic lineages, we mapped reads from each species to the P. gracilis genome using mrFAST version 2.6.0 (ref. 70) allowing 6% edit distance.
