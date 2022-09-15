@@ -49,14 +49,14 @@ wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/003/957/555/GCA_003957555.1_bC
 
 # Budgerigar genome and annotation
 wget ftp://ftp.ensembl.org/pub/rapid-release/gff3/melopsittacus_undulatus//Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3.gz -o genomes/
-wget ftp://ftp.ensembl.org/pub/rapid-release/fasta/melopsittacus_undulatus/dna//Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa.gz -o annotations/
+wget ftp://ftp.ensembl.org/pub/rapid-release/fasta/melopsittacus_undulatus/dna//Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa.gz -o annotation/
 
 # Golden eagle genome
 wget ftp://ftp.ensembl.org/pub/release-100/fasta/aquila_chrysaetos_chrysaetos/dna/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa.gz -o genomes/
 
 # Chicken genome and annotation
 wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.fna.gz -o genomes/
-wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.gff.gz -o annotations/
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/315/GCF_000002315.6_GRCg6a/GCF_000002315.6_GRCg6a_genomic.gff.gz -o annotation/
 
 infa=genomes/todChl.scaffolds.full_mask.fa
 
@@ -78,19 +78,19 @@ java -jar -Xms80G -XX:ParallelGCThreads=48 ../GeMoMa-1.7.1.jar CLI GeMoMaPipelin
 	s=own \
 	i=melUnd \
 	g=genomes/Melopsittacus_undulatus.bMelUnd1.mat.Z.dna.toplevel.fa \
-	a=annotations/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
+	a=annotation/Melopsittacus_undulatus.bMelUnd1.mat.Z.101.gff3 \
 	s=own \
 	i=galGal \
 	g=genomes/GCF_000002315.6_GRCg6a_genomic.fna \
-	a=annotations/GCF_000002315.6_GRCg6a_genomic.gff \
+	a=annotation/GCF_000002315.6_GRCg6a_genomic.gff \
 	s=own \
 	i=aquChr \
 	g=genomes/Aquila_chrysaetos_chrysaetos.bAquChr1.2.dna_sm.toplevel.fa \
-	a=annotations/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
+	a=annotation/Aquila_chrysaetos_chrysaetos.bAquChr1.2.101.gff3 \
 	s=own \
 	i=calAnn \
 	g=genomes/GCF_003957555.1_bCalAnn1_v1.p_genomic.fna \
-	a=annotations/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
+	a=annotation/GCF_003957555.1_bCalAnn1_v1.p_genomic.gff
 
 # --mask-lower-case
 
@@ -142,7 +142,7 @@ alias ips=/home/FM/celiason/uce-alcedinidae/interproscan-5.47-82.0/interproscan.
 
 # Run
 ref=genomes/todChl.fasta
-ips -i annotations/proteins_all.faa -goterms -f tsv
+ips -i annotation/proteins_all.faa -goterms -f tsv
 
 # Using uniprot
 
@@ -321,7 +321,7 @@ for f in proteomes/*faa
 		python primary_transcript2.py $f
 	done
 
-python primary_transcript2.py annotations/proteins.faa
+python primary_transcript2.py annotation/proteins.faa
 
 # Run with coraciiform-heavy species set
 orthofinder -t 24 -a 24 -M msa -og -S mmseqs -T iqtree -f proteomes/primary_transcripts/
@@ -459,7 +459,7 @@ genes <- sort(unique(genes))
 clipr::write_clip(genes)  # put this into STRING network website for analysis
 
 # Load interproscan annotation
-iprdat <- read.delim("annotations/todChl_proteins_all_gemoma_faa.tsv", head=FALSE)
+iprdat <- read.delim("annotation/todChl_proteins_all_gemoma_faa.tsv", head=FALSE)
 iprdat$V1 <- gsub(":", "_", iprdat$V1)  # fix transcript names
 
 # todiramphus green color (RGB) in map- 72	170	129	
@@ -554,7 +554,7 @@ seqs <- lapply(picks, readLines)
 cat(unlist(seqs), sep="\n", file="~/uce-alcedinidae/ogs_todChl.faa")
 
 # 1) Functional annotations of this set of 404 genes using MMSEQS-
-# mmseqs easy-rbh --threads 12 ogs_todChl.faa annotations/gemoma/uniprot_sprot.fasta ogs_todChl_uniprot.mmseqs tmp
+# mmseqs easy-rbh --threads 12 ogs_todChl.faa annotation/gemoma/uniprot_sprot.fasta ogs_todChl_uniprot.mmseqs tmp
 # head ogs_todChl_uniprot.mmseqs
 
 # Gene list
