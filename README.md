@@ -1,1 +1,1 @@
-Code and output (e.g., gene annotations) used the Todiramphus chloris genome paper (Eliason et al. 2022 G3)
+Code used in analyses for the Todiramphus chloris genome paper (Eliason et al. 2022 G3)
