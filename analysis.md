@@ -583,7 +583,7 @@ tops <- view(res, 125)
 cat(tops$term_id, sep="\n")
 ```
 
-## R code to plot in REVIGO-
+### R code to plot in REVIGO-
 
 ```r
 # A treemap R script produced by the Revigo server at http://revigo.irb.hr/
@@ -657,7 +657,7 @@ stuff$uniqueness <- as.numeric( as.character(stuff$uniqueness) );
 stuff$dispensability <- as.numeric( as.character(stuff$dispensability) );
 ```
 
-## Output figures
+### Output figures
 
 ```r
 # by default, outputs to a PDF file
