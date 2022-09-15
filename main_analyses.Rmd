@@ -284,16 +284,6 @@ ref=GCA_009819595.1_bMerNub1.pri_genomic.fna
 ```sh
 # in vortex/storage/raw_reads-
 
-# DONE - transferred
-# scp King_2E1_S1_L007_R1_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S1_L007_R2_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S2_L007_R1_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S2_L007_R2_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S3_L007_R1_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S3_L007_R2_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S4_L007_R1_001.fastq.gz celiason@10.100.111.202:~
-# scp King_2E1_S4_L007_R2_001.fastq.gz celiason@10.100.111.202:~
-
 # Combine raw reads (from SRA) into single files-
 cat King*R1*fastq.gz > todChl_reads1.fastq.gz
 cat King*R2*fastq.gz > todChl_reads2.fastq.gz
